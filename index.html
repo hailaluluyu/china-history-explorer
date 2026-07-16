@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="面向青少年的互动中国历史探索网页：时间轴、朝代故事、历史地图示意与知识挑战。" />
+  <title>华夏长卷 · 中国历史探索</title>
+  <style>
+    :root {
+      --paper: #f5eedf;
+      --paper-deep: #e9ddc4;
+      --ink: #24211d;
+      --muted: #6d6559;
+      --vermilion: #a9362b;
+      --vermilion-dark: #79231d;
+      --gold: #b88a3b;
+      --jade: #3f7062;
+      --line: rgba(70, 56, 39, .20);
+      --shadow: 0 18px 50px rgba(66, 45, 22, .13);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    ::selection { color:#fff; background:var(--vermilion); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(184,138,59,.11), transparent 22rem),
+        linear-gradient(rgba(91,72,44,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 100% 28px, auto;
+      font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+      line-height: 1.7;
+    }
+    .scroll-progress { position:fixed; top:0; left:0; z-index:100; width:0; height:3px; background:linear-gradient(90deg,var(--vermilion),var(--gold)); box-shadow:0 0 10px rgba(169,54,43,.3); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid rgba(169,54,43,.34); outline-offset: 3px; }
+
+    .skip-link { position: fixed; left: 12px; top: -60px; z-index: 99; padding: 10px 16px; background: var(--ink); color: white; }
+    .skip-link:focus { top: 12px; }
+    header {
+      min-height: 86vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+    }
+    .mountains { position: absolute; inset: auto 0 0; height: 42%; opacity: .2; pointer-events: none; }
+    .mountain { position:absolute; bottom:-35%; width:46vw; height:46vw; transform:rotate(45deg); border:2px solid var(--jade); border-radius: 35% 3%; }
+    .m1 { left:-8%; } .m2 { left:28%; bottom:-52%; width:58vw; height:58vw; } .m3 { right:-20%; border-color:var(--gold); }
+    nav { width:min(1180px, calc(100% - 36px)); margin:auto; height:68px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; padding:0 18px; border:1px solid transparent; }
+    header.scrolled nav { position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:90; background:rgba(245,238,223,.88); border-color:var(--line); border-radius:99px; box-shadow:0 10px 34px rgba(55,38,22,.12); backdrop-filter:blur(14px); }
+    .brand { font-size:1.18rem; letter-spacing:.2em; font-weight:800; text-decoration:none; }
+    .brand-seal { display:inline-grid; place-items:center; width:34px; height:34px; margin-right:9px; color:#fff; background:var(--vermilion); border-radius:4px; letter-spacing:0; transform:rotate(-2deg); }
+    .nav-links { display:flex; gap:20px; }
+    .nav-links a { text-decoration:none; color:var(--muted); font-size:.94rem; }
+    .nav-links a:hover { color:var(--vermilion); }
+    .hero { width:min(1180px, calc(100% - 36px)); margin:auto; display:grid; grid-template-columns:1.12fr .88fr; align-items:center; gap:64px; padding:60px 0 110px; position:relative; z-index:1; }
+    .eyebrow { color:var(--vermilion); letter-spacing:.24em; font-weight:700; font-size:.82rem; }
+    h1 { margin:.25em 0 .35em; font-size:clamp(3.1rem, 8vw, 7.1rem); line-height:.97; letter-spacing:.08em; font-weight:800; }
+    .hero h1 span { display:block; margin-top:.18em; color:transparent; -webkit-text-stroke:1px var(--vermilion); font-size:.52em; letter-spacing:.28em; }
+    .lead { max-width:620px; color:var(--muted); font-size:1.08rem; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+    .btn { min-height:46px; padding:10px 19px; border:1px solid var(--ink); background:transparent; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:99px; transition:.2s ease; }
+    .btn.primary { color:white; background:var(--vermilion); border-color:var(--vermilion); }
+    .btn:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(50,35,20,.13); }
+    .hero-art { aspect-ratio:1; max-width:470px; justify-self:end; position:relative; display:grid; place-items:center; }
+    .ring { position:absolute; border:1px solid var(--line); border-radius:50%; }
+    .ring.one { inset:5%; animation:spin 35s linear infinite; }
+    .ring.two { inset:18%; border-style:dashed; animation:spin 22s linear infinite reverse; }
+    .ring::before, .ring::after { content:""; position:absolute; width:10px; height:10px; background:var(--gold); border-radius:50%; top:12%; left:16%; }
+    .ring::after { top:auto; left:auto; bottom:18%; right:10%; background:var(--jade); }
+    .hero-seal { width:42%; aspect-ratio:1; display:grid; place-items:center; background:var(--vermilion); color:#f7eddd; font-size:clamp(3rem,7vw,6rem); border:10px double rgba(255,255,255,.7); box-shadow:var(--shadow); transform:rotate(-3deg); }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    main > section { padding:96px max(18px, calc((100% - 1180px)/2)); }
+    main > section:nth-child(even) { background-color:rgba(255,255,255,.16); }
+    .section-head { display:grid; grid-template-columns:.75fr 1.25fr; gap:50px; align-items:end; margin-bottom:42px; }
+    .kicker { color:var(--vermilion); font-size:.8rem; letter-spacing:.22em; font-weight:700; text-transform:uppercase; }
+    h2 { margin:.12em 0 0; font-size:clamp(2rem,5vw,4rem); line-height:1.15; letter-spacing:.05em; }
+    .section-head p { color:var(--muted); margin:0; max-width:650px; }
+
+    .timeline-section { background:rgba(255,255,255,.23); border-bottom:1px solid var(--line); }
+    .period-tabs { display:flex; gap:10px; overflow-x:auto; padding:4px 2px 18px; scrollbar-width:thin; }
+    .period-tab { white-space:nowrap; min-height:44px; border:1px solid var(--line); background:rgba(255,255,255,.35); color:var(--muted); padding:8px 17px; border-radius:99px; }
+    .period-tab.active { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+    .timeline-shell { display:grid; grid-template-columns:1fr 1.08fr; min-height:430px; margin-top:20px; border:1px solid var(--line); box-shadow:var(--shadow); background:rgba(255,252,245,.68); }
+    .timeline-list { padding:28px; border-right:1px solid var(--line); max-height:540px; overflow:auto; }
+    .dynasty-item { display:grid; grid-template-columns:74px 1fr; width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); background:transparent; padding:18px 10px; color:var(--ink); }
+    .dynasty-item:last-child { border-bottom:0; }
+    .dynasty-item time { color:var(--vermilion); font-size:.77rem; padding-top:4px; }
+    .dynasty-item strong { display:block; font-size:1.18rem; }
+    .dynasty-item small { color:var(--muted); }
+    .dynasty-item.active { background:rgba(169,54,43,.07); box-shadow:inset 3px 0 var(--vermilion); }
+    .dynasty-item:hover { background:rgba(184,138,59,.07); }
+    .detail { padding:52px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; }
+    .detail::after { content:attr(data-mark); position:absolute; right:-5px; bottom:-85px; font-size:15rem; color:rgba(169,54,43,.045); line-height:1; }
+    .detail-year { color:var(--vermilion); font-size:.86rem; letter-spacing:.12em; }
+    .detail h3 { margin:.1em 0 .5em; font-size:clamp(2.5rem,5vw,4.8rem); line-height:1.1; }
+    .detail p { max-width:560px; color:var(--muted); position:relative; z-index:1; }
+    .detail-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; position:relative; z-index:1; }
+    .tag { padding:5px 11px; border:1px solid var(--line); border-radius:99px; font-size:.8rem; }
+
+    .story-grid { display:grid; grid-template-columns:1.3fr .7fr; grid-template-rows:auto auto; gap:18px; }
+    .story-card { min-height:280px; position:relative; overflow:hidden; padding:34px; border:1px solid var(--line); background:#efe4ce; transition:transform .25s ease, box-shadow .25s ease; }
+    .story-card:hover { transform:translateY(-5px); box-shadow:var(--shadow); }
+    .story-card.tall { grid-row:span 2; min-height:580px; background:var(--ink); color:var(--paper); display:flex; flex-direction:column; justify-content:flex-end; }
+    .story-card.tall::before { content:"丝\A绸\A之\A路"; white-space:pre; position:absolute; top:38px; right:38px; color:rgba(245,238,223,.08); font-size:5rem; line-height:.9; font-weight:900; }
+    .story-card.jade { background:#dfe7dc; }
+    .story-card.red { background:#ead8d1; }
+    .story-no { font-size:.76rem; letter-spacing:.18em; opacity:.68; }
+    .story-card h3 { font-size:clamp(1.55rem,3vw,2.6rem); margin:.35em 0; line-height:1.15; }
+    .story-card p { max-width:570px; color:inherit; opacity:.77; }
+    .route { height:160px; margin:26px 0; position:relative; }
+    .route::before { content:""; position:absolute; left:0; right:0; top:50%; border-top:2px dashed var(--gold); transform:rotate(-6deg); }
+    .route i { position:absolute; width:12px; height:12px; background:var(--gold); border-radius:50%; }
+    .route i:nth-child(1){left:4%;top:57%}.route i:nth-child(2){left:34%;top:44%}.route i:nth-child(3){left:66%;top:34%}.route i:nth-child(4){right:3%;top:24%}
+    .route span { position:absolute; font-size:.8rem; color:var(--paper); opacity:.76; }
+    .route .c1{left:0;top:72%}.route .c2{left:29%;top:57%}.route .c3{left:62%;top:48%}.route .c4{right:0;top:3%}
+
+    .event-river { position:relative; display:grid; max-width:980px; margin:auto; }
+    .event-river::before { content:""; position:absolute; left:50%; top:0; bottom:0; width:2px; background:linear-gradient(var(--gold),var(--vermilion),var(--jade)); transform:translateX(-50%); }
+    .event { width:50%; padding:0 52px 38px 0; position:relative; }
+    .event:nth-child(even) { margin-left:50%; padding:0 0 38px 52px; }
+    .event::after { content:""; position:absolute; right:-7px; top:9px; width:12px; height:12px; border-radius:50%; background:var(--paper); border:2px solid var(--vermilion); }
+    .event:nth-child(even)::after { right:auto; left:-7px; border-color:var(--jade); }
+    .event time { color:var(--vermilion); font-size:.78rem; letter-spacing:.08em; }
+    .event h3 { margin:.12em 0 .25em; font-size:1.3rem; }
+    .event p { margin:0; color:var(--muted); font-size:.92rem; }
+
+    .map-section { background:#dfe5d8; overflow:hidden; }
+    .map-shell { display:grid; grid-template-columns:1.25fr .75fr; border:1px solid rgba(42,73,62,.25); background:#e9eadc; box-shadow:var(--shadow); }
+    .map-canvas { min-height:510px; padding:24px; display:grid; place-items:center; overflow:hidden; }
+    .map-canvas svg { width:100%; height:auto; max-height:480px; filter:drop-shadow(0 13px 16px rgba(39,63,54,.14)); }
+    .map-info { padding:44px 38px; background:rgba(250,246,232,.72); border-left:1px solid rgba(42,73,62,.2); display:flex; flex-direction:column; justify-content:center; }
+    .map-info h3 { margin:.12em 0 .5em; font-size:2rem; }
+    .map-info p { color:var(--muted); }
+    .map-controls { display:grid; gap:9px; margin-top:20px; }
+    .map-btn { min-height:46px; text-align:left; border:1px solid var(--line); background:transparent; padding:10px 14px; border-radius:7px; }
+    .map-btn.active { color:white; background:var(--jade); border-color:var(--jade); }
+    .map-btn:hover:not(.active) { background:rgba(63,112,98,.08); border-color:var(--jade); }
+    .route-line { fill:none; stroke:var(--vermilion); stroke-width:5; stroke-linecap:round; stroke-dasharray:10 12; animation:routeFlow 1.8s linear infinite; }
+    .route-line.sea { stroke:#327987; }
+    .map-dot { fill:var(--vermilion); transform-box:fill-box; transform-origin:center; animation:pulse 1.7s ease-in-out infinite; }
+    .map-layer { opacity:0; transition:opacity .35s ease; }
+    .map-layer.active { opacity:1; }
+    @keyframes routeFlow { to { stroke-dashoffset:-44; } }
+    @keyframes pulse { 50% { transform:scale(1.55); opacity:.55; } }
+
+    .games-section { background:rgba(255,255,255,.22); }
+    .game-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+    .game-tab { min-height:44px; padding:8px 16px; border:1px solid var(--line); background:transparent; border-radius:99px; }
+    .game-tab.active { background:var(--vermilion); color:white; border-color:var(--vermilion); }
+    .game-panel { display:none; }
+    .game-panel.active { display:block; }
+    .order-list { display:grid; gap:10px; margin:18px 0; }
+    .order-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line); background:rgba(255,255,255,.42); border-radius:8px; }
+    .order-item span { flex:1; }
+    .move-btn { width:42px; height:42px; border:1px solid var(--line); background:transparent; border-radius:6px; }
+    .score-card { font-size:1.25rem; color:var(--vermilion); font-weight:700; }
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+
+    .people-section { background:var(--ink); color:var(--paper); }
+    .people-section .section-head p { color:#b9b0a3; }
+    .people-section .kicker { color:#d29973; }
+    .people-strip { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid rgba(255,255,255,.18); border-bottom:1px solid rgba(255,255,255,.18); }
+    .person { padding:34px 24px 30px; border-right:1px solid rgba(255,255,255,.18); min-height:255px; transition:.22s ease; }
+    .person:last-child { border-right:0; }
+    .person:hover { background:rgba(255,255,255,.055); transform:translateY(-5px); }
+    .person-badge { width:72px; height:72px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.35); border-radius:50%; font-size:1.8rem; color:#d5ad6b; }
+    .person h3 { margin:22px 0 4px; font-size:1.45rem; }
+    .person small { color:#d29973; }
+    .person p { color:#b9b0a3; font-size:.91rem; }
+
+    .quiz-wrap { display:grid; grid-template-columns:.72fr 1.28fr; border:1px solid var(--line); background:rgba(255,255,255,.4); box-shadow:var(--shadow); }
+    .quiz-intro { padding:44px; background:var(--vermilion); color:white; }
+    .quiz-intro .big { font-size:6rem; line-height:1; opacity:.25; }
+    .quiz-intro h3 { font-size:2rem; margin:.35em 0; }
+    .quiz-panel { padding:44px; }
+    .progress { height:4px; background:var(--line); margin-bottom:35px; }
+    .progress span { display:block; height:100%; background:var(--vermilion); transition:width .25s; }
+    #question { font-size:1.45rem; line-height:1.45; margin:0 0 24px; }
+    .answers { display:grid; gap:10px; }
+    .answer { min-height:50px; text-align:left; padding:11px 16px; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:8px; }
+    .answer:hover:not(:disabled) { border-color:var(--vermilion); background:rgba(169,54,43,.04); }
+    .answer.correct { background:#dce9df; border-color:#4f8060; }
+    .answer.wrong { background:#eed8d3; border-color:var(--vermilion); }
+    .feedback { min-height:52px; color:var(--muted); margin:16px 0 5px; }
+    #nextBtn { display:none; }
+
+    footer { padding:48px max(18px, calc((100% - 1180px)/2)); border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:20px; color:var(--muted); font-size:.88rem; }
+    .back-top { text-decoration:none; color:var(--vermilion); }
+
+    @media (max-width: 820px) {
+      .nav-links { display:none; }
+      header { min-height:auto; }
+      .hero { grid-template-columns:1fr; padding:55px 0 85px; gap:25px; }
+      .hero-art { width:min(80vw,360px); justify-self:center; order:-1; }
+      .section-head, .timeline-shell, .quiz-wrap { grid-template-columns:1fr; }
+      .timeline-list { border-right:0; border-bottom:1px solid var(--line); max-height:360px; }
+      .detail { padding:38px 26px; min-height:350px; }
+      .story-grid { grid-template-columns:1fr; }
+      .story-card.tall { grid-row:auto; min-height:480px; }
+      .people-strip { grid-template-columns:1fr 1fr; }
+      .map-shell { grid-template-columns:1fr; }
+      .map-info { border-left:0; border-top:1px solid rgba(42,73,62,.2); }
+      .person:nth-child(2) { border-right:0; }
+      .person:nth-child(-n+2) { border-bottom:1px solid rgba(255,255,255,.18); }
+    }
+    @media (max-width: 520px) {
+      main > section { padding-top:72px; padding-bottom:72px; }
+      .section-head { gap:18px; }
+      .timeline-list, .quiz-panel, .quiz-intro { padding:25px 20px; }
+      .people-strip { grid-template-columns:1fr; }
+      .person { border-right:0; border-bottom:1px solid rgba(255,255,255,.18); }
+      .person:nth-child(3) { border-bottom:1px solid rgba(255,255,255,.18); }
+      .event-river::before { left:7px; }
+      .event, .event:nth-child(even) { width:100%; margin-left:0; padding:0 0 30px 34px; }
+      .event::after, .event:nth-child(even)::after { left:0; right:auto; }
+      footer { flex-direction:column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior:auto; }
+      *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+      .reveal { opacity:1; transform:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header id="top">
+    <nav aria-label="主导航">
+      <a class="brand" href="#top"><span class="brand-seal">史</span>华夏长卷</a>
+      <div class="nav-links">
+        <a href="#timeline">朝代时间轴</a><a href="#events">大事记</a><a href="#map">历史地图</a><a href="#people">历史人物</a><a href="#games">互动挑战</a>
+      </div>
+    </nav>
+    <div class="hero">
+      <div>
+        <div class="eyebrow">五千年文明 · 一卷看中国</div>
+        <h1>穿越华夏<span>从远古走向今天</span></h1>
+        <p class="lead">历史不是一串需要背诵的年份，而是无数人共同写下的故事。滑动长卷，看看城市如何兴起、思想如何碰撞、发明如何改变世界。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#timeline">开启时空之旅</a>
+          <a class="btn" href="#games">先来挑战一下</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="象征历史年轮的装饰图案">
+        <div class="ring one"></div><div class="ring two"></div><div class="hero-seal">史</div>
+      </div>
+    </div>
+    <div class="mountains" aria-hidden="true"><i class="mountain m1"></i><i class="mountain m2"></i><i class="mountain m3"></i></div>
+  </header>
+
+  <main id="main">
+    <section class="timeline-section" id="timeline">
+      <div class="section-head">
+        <div><span class="kicker">01 · Timeline</span><h2>朝代时间轴</h2></div>
+        <p>选择历史阶段，再点击朝代。注意：早期年代来自文献记载与考古研究，学界对部分具体年份仍有讨论。</p>
+      </div>
+      <div class="period-tabs" role="tablist" aria-label="历史阶段筛选">
+        <button class="period-tab active" data-period="all" role="tab" aria-selected="true">全部</button>
+        <button class="period-tab" data-period="early" role="tab" aria-selected="false">先秦</button>
+        <button class="period-tab" data-period="empire" role="tab" aria-selected="false">秦汉至隋唐</button>
+        <button class="period-tab" data-period="later" role="tab" aria-selected="false">宋元明清</button>
+        <button class="period-tab" data-period="modern" role="tab" aria-selected="false">近现代</button>
+      </div>
+      <div class="timeline-shell">
+        <div class="timeline-list" id="dynastyList" aria-label="朝代列表"></div>
+        <article class="detail" id="detail" aria-live="polite" data-mark="夏">
+          <span class="detail-year" id="detailYear"></span><h3 id="detailName"></h3><p id="detailText"></p><div class="detail-tags" id="detailTags"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="events">
+      <div class="section-head"><div><span class="kicker">02 · Milestones</span><h2>历史大事记</h2></div><p>把重要事件放回时间长河中，观察制度、交通、科技与社会如何一步步发生变化。</p></div>
+      <div class="event-river">
+        <article class="event"><time>约公元前1250年起</time><h3>甲骨文记录商代社会</h3><p>殷墟甲骨卜辞保存了祭祀、战争、农业与天象等珍贵信息。</p></article>
+        <article class="event"><time>公元前221年</time><h3>秦完成统一</h3><p>结束战国割据，推行郡县制，并在文字、度量衡等方面实施统一措施。</p></article>
+        <article class="event"><time>公元前2世纪</time><h3>张骞通西域</h3><p>加强中原与西域联系，为后来丝绸之路的发展创造条件。</p></article>
+        <article class="event"><time>605年起</time><h3>隋代大运河体系形成</h3><p>沟通南北水系，促进物资运输、人员往来与区域交流。</p></article>
+        <article class="event"><time>7—9世纪</time><h3>长安成为国际都会</h3><p>唐代中外交流活跃，不同地区的商人、使节和文化汇聚于此。</p></article>
+        <article class="event"><time>11世纪中期</time><h3>毕昇发明活字印刷术</h3><p>北宋沈括在《梦溪笔谈》中记录了毕昇的胶泥活字技术。</p></article>
+        <article class="event"><time>1405—1433年</time><h3>郑和船队远航</h3><p>多次航行至东南亚、南亚、西亚和东非部分地区，促进海上交往。</p></article>
+        <article class="event"><time>1949年</time><h3>中华人民共和国成立</h3><p>中国历史进入新的发展阶段，国家建设与社会面貌持续发生变化。</p></article>
+        <article class="event"><time>1978年起</time><h3>改革开放</h3><p>中国开启改革开放和社会主义现代化建设新时期。</p></article>
+      </div>
+    </section>
+
+    <section class="map-section" id="map">
+      <div class="section-head"><div><span class="kicker">03 · Map</span><h2>路在山海之间</h2></div><p>这是一幅教学示意图，并非精确历史疆域图。点击按钮，观察陆路、运河与海上航线怎样连接不同地区。</p></div>
+      <div class="map-shell">
+        <div class="map-canvas"><svg viewBox="0 0 760 520" role="img" aria-label="中国古代交通路线教学示意图">
+          <defs><filter id="rough"><feTurbulence baseFrequency=".016" numOctaves="2" seed="4" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="8"/></filter></defs>
+          <path d="M92 196 Q145 70 294 84 Q400 25 495 104 Q630 105 664 224 Q716 300 627 353 Q595 457 469 432 Q359 498 269 418 Q145 431 136 324 Q55 291 92 196Z" fill="#c7d4bf" stroke="#476f5f" stroke-width="4" filter="url(#rough)"/>
+          <path d="M112 280 Q230 233 322 274 T546 246 T666 272" fill="none" stroke="#8aa3a5" stroke-width="8" opacity=".8"/><path d="M396 117 Q372 186 386 248 T402 399" fill="none" stroke="#78969b" stroke-width="6"/>
+          <g fill="#405c50" font-size="17" font-family="serif"><text x="425" y="220">洛阳</text><text x="330" y="225">长安</text><text x="510" y="315">杭州</text><text x="275" y="177">敦煌</text><text x="572" y="181">北京</text></g>
+          <g id="silkLayer" class="map-layer active"><path class="route-line" d="M360 214 Q292 175 252 181 Q180 183 112 223"/><circle class="map-dot" cx="360" cy="214" r="7"/><circle class="map-dot" cx="252" cy="181" r="7"/><text x="92" y="250" fill="#79231d" font-size="17">向中亚与更远地区</text></g>
+          <g id="canalLayer" class="map-layer"><path class="route-line sea" d="M580 176 Q475 215 397 128 M397 128 Q379 214 390 286 Q403 344 510 310"/><circle class="map-dot" cx="580" cy="176" r="7"/><circle class="map-dot" cx="510" cy="310" r="7"/></g>
+          <g id="voyageLayer" class="map-layer"><path class="route-line sea" d="M510 310 Q590 353 632 391 Q674 429 727 455"/><path d="M623 379 l30 0 -12 15z" fill="#a9362b"/><text x="565" y="475" fill="#275b66" font-size="17">驶向南海与印度洋</text></g>
+        </svg></div>
+        <aside class="map-info"><span class="kicker">路线探索</span><h3 id="mapTitle">丝绸之路</h3><p id="mapText">以长安为重要起点，经河西走廊通往西域，并连接中亚及更远地区。它不是一条单独的道路，而是不断变化的交通网络。</p><div class="map-controls"><button class="map-btn active" data-layer="silk">陆上丝绸之路</button><button class="map-btn" data-layer="canal">隋唐大运河</button><button class="map-btn" data-layer="voyage">郑和远航</button></div></aside>
+      </div>
+    </section>
+
+    <section id="stories">
+      <div class="section-head">
+        <div><span class="kicker">04 · Stories</span><h2>文明的足迹</h2></div>
+        <p>王朝会更替，文明却在交流中不断生长。制度、交通、科技和思想，一起塑造了我们今天的世界。</p>
+      </div>
+      <div class="story-grid">
+        <article class="story-card tall">
+          <span class="story-no">交流 · 汉至唐</span>
+          <div class="route" aria-label="丝绸之路路线示意"><i></i><i></i><i></i><i></i><span class="c1">长安</span><span class="c2">敦煌</span><span class="c3">中亚</span><span class="c4">更远的西方</span></div>
+          <h3>丝绸之路，不只运送丝绸</h3>
+          <p>商旅带着货物穿越山川，也带来了音乐、宗教、艺术与新的生活方式。这是一条跨越欧亚大陆的交流网络。</p>
+        </article>
+        <article class="story-card jade">
+          <span class="story-no">思想 · 春秋战国</span><h3>百家争鸣</h3><p>孔子、孟子、老子、庄子、墨子、韩非等思想家，从不同角度讨论社会、人生与秩序。</p>
+        </article>
+        <article class="story-card red">
+          <span class="story-no">科技 · 古代中国</span><h3>改变世界的创造</h3><p>造纸术、印刷术、火药和指南针推动了知识传播、航海与社会发展；还有天文、农学、医学等丰富成就。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="people-section" id="people">
+      <div class="section-head">
+        <div><span class="kicker">05 · People</span><h2>他们与时代</h2></div>
+        <p>认识历史人物，不只看“做了什么”，也要思考他们身处怎样的时代、面对什么选择，以及后人如何评价。</p>
+      </div>
+      <div class="people-strip">
+        <article class="person"><div class="person-badge">孔</div><h3>孔子</h3><small>思想家 · 教育家</small><p>重视学习、实践和品德，主张“有教无类”，其思想对东亚文化影响深远。</p></article>
+        <article class="person"><div class="person-badge">迁</div><h3>司马迁</h3><small>西汉 · 史学家</small><p>撰写《史记》，用纪传体记录上古至汉武帝时期的历史与人物。</p></article>
+        <article class="person"><div class="person-badge">武</div><h3>武则天</h3><small>唐代 · 政治人物</small><p>中国历史上唯一的女皇帝。评价她时，需要同时观察政治、制度与时代背景。</p></article>
+        <article class="person"><div class="person-badge">隆</div><h3>郑和</h3><small>明代 · 航海家</small><p>率领船队多次远航，抵达东南亚、南亚、西亚和东非一些地区，促进海上交流。</p></article>
+      </div>
+    </section>
+
+    <section class="games-section" id="games">
+      <div class="section-head">
+        <div><span class="kicker">06 · Challenge</span><h2>历史互动挑战</h2></div>
+        <p>先完成知识问答，再把事件排成正确顺序。答错也没关系——错误常常是探索的起点。</p>
+      </div>
+      <div class="game-tabs"><button class="game-tab active" data-game="quizGame">知识问答</button><button class="game-tab" data-game="orderGame">时序挑战</button></div>
+      <div class="game-panel active" id="quizGame"><div class="quiz-wrap">
+        <div class="quiz-intro"><div class="big">问</div><h3>以史为镜</h3><p>每答完一题都会看到解释。完成后还能再挑战一次。</p></div>
+        <div class="quiz-panel">
+          <div class="progress" aria-label="答题进度"><span id="progressBar" style="width:33%"></span></div>
+          <p id="question"></p><div class="answers" id="answers"></div><p class="feedback" id="feedback" aria-live="polite"></p>
+          <button class="btn primary" id="nextBtn">下一题</button>
+        </div>
+      </div></div>
+      <div class="game-panel" id="orderGame"><div class="quiz-wrap"><div class="quiz-intro"><div class="big">序</div><h3>谁先谁后？</h3><p>使用上下按钮调整顺序，从最早发生排到最晚发生。</p></div><div class="quiz-panel"><p>把下面四件大事按时间先后排列：</p><div class="order-list" id="orderList"></div><p class="feedback" id="orderFeedback" aria-live="polite"></p><button class="btn primary" id="checkOrder">检查顺序</button> <button class="btn" id="shuffleOrder">重新打乱</button></div></div></div>
+    </section>
+  </main>
+
+  <footer><span>华夏长卷 · 为好奇心而作的中国历史入门页</span><span>年代与内容为入门性概览，深入研究请查阅权威史料。</span><a class="back-top" href="#top">回到卷首 ↑</a></footer>
+
+  <script>
+    const progressLine=document.getElementById('scrollProgress');
+    const heroHeader=document.querySelector('header');
+    addEventListener('scroll',()=>{
+      const max=document.documentElement.scrollHeight-innerHeight;
+      progressLine.style.width=(max>0?scrollY/max*100:0)+'%';
+      heroHeader.classList.toggle('scrolled',scrollY>110);
+    },{passive:true});
+    const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+      if(entry.isIntersecting){entry.target.classList.add('visible');revealObserver.unobserve(entry.target);}
+    }),{threshold:.12});
+    document.querySelectorAll('.section-head,.timeline-shell,.event,.map-shell,.story-card,.person,.game-panel').forEach(el=>{el.classList.add('reveal');revealObserver.observe(el);});
+
+    const dynasties = [
+      {name:'夏', years:'约前2070—约前1600', period:'early', subtitle:'早期国家的传说与探索', text:'传统文献将夏视为中国历史上第一个王朝。考古学者持续通过遗址与器物，探索早期国家如何形成。', tags:['早期国家','二里头文化','文献与考古']},
+      {name:'商', years:'约前1600—前1046', period:'early', subtitle:'甲骨上的古老文字', text:'商代晚期留下大量甲骨卜辞。青铜铸造技术发达，殷墟等考古发现让三千多年前的社会变得可见。', tags:['甲骨文','青铜器','殷墟']},
+      {name:'周', years:'前1046—前256', period:'early', subtitle:'礼制与思想的时代', text:'周代包括西周和东周。春秋战国时期诸侯竞争、社会变革，也出现了百家争鸣的思想繁荣。', tags:['分封制','春秋战国','百家争鸣']},
+      {name:'秦', years:'前221—前207', period:'empire', subtitle:'第一个统一的中央集权王朝', text:'秦结束战国割据，建立统一王朝，推行郡县制，并统一文字、度量衡等。秦朝短暂，却对后世制度影响深远。', tags:['统一','郡县制','文字规范']},
+      {name:'汉', years:'前202—220', period:'empire', subtitle:'大一统格局的巩固', text:'汉代分西汉与东汉，政治、经济和文化持续发展。张骞通西域推动了东西方交通与交流。', tags:['西汉与东汉','丝绸之路','史记']},
+      {name:'三国两晋南北朝', years:'220—589', period:'empire', subtitle:'分裂、融合与迁徙', text:'这一时期政权更替频繁，人口迁徙和各民族交往交融不断加深，江南地区得到进一步开发。', tags:['三国','民族交融','江南开发']},
+      {name:'隋', years:'581—618', period:'empire', subtitle:'再统一与大运河', text:'隋朝结束长期分裂，重新统一。大运河加强南北交通，科举制度也在这一时期逐步建立。', tags:['统一','大运河','科举']},
+      {name:'唐', years:'618—907', period:'empire', subtitle:'开放而多元的盛世气象', text:'唐代国力强盛，对外交流活跃。长安是国际性都市，诗歌、书法、绘画与多元文化都展现出旺盛活力。', tags:['长安','唐诗','中外交流']},
+      {name:'宋', years:'960—1279', period:'later', subtitle:'城市、商业与文化繁荣', text:'宋代分北宋和南宋。城市经济、海外贸易和文化教育发展，活字印刷、火药应用、指南针等技术取得重要进展。', tags:['商业城市','科技','宋词']},
+      {name:'元', years:'1271—1368', period:'later', subtitle:'广阔疆域中的交流', text:'元朝由忽必烈建立，完成全国统一。驿站与交通网络促进了不同地区之间的人员、物产和文化交流。', tags:['统一','行省制度','交通交流']},
+      {name:'明', years:'1368—1644', period:'later', subtitle:'航海、城市与典籍', text:'明代前期郑和率船队远航。北京城与故宫的营建、《永乐大典》的编纂，留下丰富文化遗产。', tags:['郑和下西洋','故宫','永乐大典']},
+      {name:'清', years:'1636—1912', period:'later', subtitle:'统一多民族国家的发展与近代转折', text:'清代前中期统一多民族国家进一步巩固。19世纪后，中国遭遇内忧外患，并在冲击中开始艰难的近代转型。', tags:['多民族国家','近代转型','社会变革']},
+      {name:'近现代中国', years:'1912—今天', period:'modern', subtitle:'探索、奋斗与发展', text:'20世纪以来，中国经历深刻社会变革。1949年中华人民共和国成立，此后在探索中推进国家建设、改革开放与现代化发展。', tags:['社会变革','1949','改革开放']}
+    ];
+
+    const list = document.getElementById('dynastyList');
+    const detail = document.getElementById('detail');
+    let selectedName = '夏';
+    function showDetail(item) {
+      selectedName = item.name;
+      document.getElementById('detailYear').textContent = item.years;
+      document.getElementById('detailName').textContent = item.name;
+      document.getElementById('detailText').textContent = item.text;
+      document.getElementById('detailTags').innerHTML = item.tags.map(t => `<span class="tag">${t}</span>`).join('');
+      detail.dataset.mark = item.name.slice(0,1);
+      document.querySelectorAll('.dynasty-item').forEach(btn => btn.classList.toggle('active', btn.dataset.name === item.name));
+    }
+    function renderList(period='all') {
+      const filtered = period === 'all' ? dynasties : dynasties.filter(d => d.period === period);
+      list.innerHTML = filtered.map(d => `<button class="dynasty-item ${d.name===selectedName?'active':''}" data-name="${d.name}"><time>${d.years}</time><span><strong>${d.name}</strong><small>${d.subtitle}</small></span></button>`).join('');
+      list.querySelectorAll('.dynasty-item').forEach(btn => btn.addEventListener('click', () => showDetail(dynasties.find(d => d.name === btn.dataset.name))));
+      if (!filtered.some(d => d.name === selectedName)) showDetail(filtered[0]);
+    }
+    document.querySelectorAll('.period-tab').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.period-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      tab.classList.add('active'); tab.setAttribute('aria-selected','true'); renderList(tab.dataset.period);
+    }));
+    renderList(); showDetail(dynasties[0]);
+
+    const mapCopy = {
+      silk:['丝绸之路','以长安为重要起点，经河西走廊通往西域，并连接中亚及更远地区。它不是一条单独的道路，而是不断变化的交通网络。'],
+      canal:['隋唐大运河','大运河以洛阳为中心，沟通南北多条水系。它运输粮食与物产，也让城市、文化和人员流动更加密切。'],
+      voyage:['郑和远航','明代郑和船队从中国东南沿海出发，经南海、印度洋，到达西亚和东非部分地区。航线展示的是大致方向。']
+    };
+    document.querySelectorAll('.map-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('.map-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      document.querySelectorAll('.map-layer').forEach(l=>l.classList.remove('active')); document.getElementById(btn.dataset.layer+'Layer').classList.add('active');
+      document.getElementById('mapTitle').textContent=mapCopy[btn.dataset.layer][0]; document.getElementById('mapText').textContent=mapCopy[btn.dataset.layer][1];
+    }));
+    document.querySelectorAll('.game-tab').forEach(tab=>tab.addEventListener('click',()=>{
+      document.querySelectorAll('.game-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.game-panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active'); document.getElementById(tab.dataset.game).classList.add('active');
+    }));
+
+    const quiz = [
+      {q:'现存中国古代最早的成熟文字系统之一，主要刻写在龟甲和兽骨上，它是什么？', options:['小篆','甲骨文','楷书'], answer:1, note:'甲骨文主要见于商代晚期遗存，是研究商代历史的重要材料。'},
+      {q:'大运河在中国古代发挥的重要作用是什么？', options:['连接南北交通','防御北方骑兵','测量天文历法'], answer:0, note:'大运河沟通多条水系，加强南北物资运输与人员往来。'},
+      {q:'下列哪一项最能概括“百家争鸣”？', options:['许多思想流派展开讨论','各地比赛书写文字','工匠竞相铸造青铜器'], answer:0, note:'春秋战国时期，不同学派围绕社会、人生与治理提出了各自见解。'}
+    ];
+    let qIndex=0, score=0, locked=false;
+    const qEl=document.getElementById('question'), answersEl=document.getElementById('answers'), feedback=document.getElementById('feedback'), nextBtn=document.getElementById('nextBtn'), bar=document.getElementById('progressBar');
+    function renderQuestion(){
+      locked=false; const item=quiz[qIndex];
+      qEl.textContent=`${qIndex+1}. ${item.q}`;
+      answersEl.innerHTML=item.options.map((o,i)=>`<button class="answer" data-i="${i}">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+      feedback.textContent=''; nextBtn.style.display='none'; bar.style.width=`${((qIndex+1)/quiz.length)*100}%`;
+      answersEl.querySelectorAll('.answer').forEach(btn=>btn.addEventListener('click',()=>chooseAnswer(Number(btn.dataset.i))));
+    }
+    function chooseAnswer(i){
+      if(locked)return; locked=true; const item=quiz[qIndex];
+      answersEl.querySelectorAll('.answer').forEach((btn,idx)=>{btn.disabled=true;if(idx===item.answer)btn.classList.add('correct');if(idx===i&&i!==item.answer)btn.classList.add('wrong');});
+      if(i===item.answer){score++;feedback.textContent='答对了！'+item.note;}else{feedback.textContent='再记住这个线索：'+item.note;}
+      nextBtn.textContent=qIndex===quiz.length-1?'查看成绩':'下一题'; nextBtn.style.display='inline-flex';
+    }
+    nextBtn.addEventListener('click',()=>{
+      if(qIndex<quiz.length-1){qIndex++;renderQuestion();return;}
+      qEl.textContent=`挑战完成：你答对了 ${score} / ${quiz.length} 题！`;
+      answersEl.innerHTML=''; feedback.textContent=score===quiz.length?'太棒了！你发现了所有关键线索。':'不错！可以回到时间轴再探索一次。';
+      nextBtn.textContent='再挑战一次'; nextBtn.style.display='inline-flex'; bar.style.width='100%';
+      nextBtn.onclick=()=>{qIndex=0;score=0;nextBtn.onclick=null;renderQuestion();};
+    });
+    renderQuestion();
+
+    const orderSource=[
+      {name:'秦完成统一',year:-221},{name:'张骞通西域',year:-138},{name:'隋代大运河开凿',year:605},{name:'郑和首次远航',year:1405}
+    ];
+    let orderItems=[];
+    const orderList=document.getElementById('orderList'), orderFeedback=document.getElementById('orderFeedback');
+    function shuffleOrder(){
+      orderItems=[...orderSource].sort(()=>Math.random()-.5);
+      if(orderItems.every((x,i)=>x===orderSource[i])) orderItems.reverse();
+      orderFeedback.textContent=''; renderOrder();
+    }
+    function renderOrder(){
+      orderList.innerHTML=orderItems.map((x,i)=>`<div class="order-item"><b>${i+1}</b><span>${x.name}</span><button class="move-btn" data-i="${i}" data-d="-1" aria-label="向上移动">↑</button><button class="move-btn" data-i="${i}" data-d="1" aria-label="向下移动">↓</button></div>`).join('');
+      orderList.querySelectorAll('.move-btn').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.i),j=i+Number(b.dataset.d);if(j<0||j>=orderItems.length)return;[orderItems[i],orderItems[j]]=[orderItems[j],orderItems[i]];renderOrder();}));
+    }
+    document.getElementById('checkOrder').addEventListener('click',()=>{
+      const ok=orderItems.every((x,i)=>x.year===orderSource[i].year);
+      orderFeedback.innerHTML=ok?'<span class="score-card">全部正确！你排出了历史的先后顺序。</span>':'还差一点。提示：先找出发生在公元前的两件事。';
+    });
+    document.getElementById('shuffleOrder').addEventListener('click',shuffleOrder);
+    shuffleOrder();
+  </script>
+</body>
+</html>
