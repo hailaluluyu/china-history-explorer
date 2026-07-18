@@ -151,6 +151,30 @@
     @keyframes routeFlow { to { stroke-dashoffset:-44; } }
     @keyframes pulse { 50% { transform:scale(1.55); opacity:.55; } }
 
+    .territory-section { background:#ede5d2; overflow:hidden; }
+    .territory-tabs { display:flex; gap:9px; overflow-x:auto; padding:3px 2px 18px; scrollbar-width:thin; }
+    .territory-tab { flex:0 0 auto; min-height:44px; padding:8px 16px; border:1px solid var(--line); border-radius:99px; background:rgba(255,255,255,.35); color:var(--muted); }
+    .territory-tab.active { color:#fff; background:var(--vermilion); border-color:var(--vermilion); }
+    .territory-shell { display:grid; grid-template-columns:minmax(0,1.38fr) minmax(280px,.62fr); min-height:570px; border:1px solid var(--line); background:#e8e1cf; box-shadow:var(--shadow); }
+    .territory-map { position:relative; min-height:570px; padding:22px; display:grid; place-items:center; overflow:hidden; background:radial-gradient(circle at 48% 44%,rgba(255,255,255,.5),transparent 56%); }
+    .territory-map svg { width:100%; height:auto; max-height:530px; }
+    .land-base { fill:#d7d0bc; stroke:#817661; stroke-width:2; stroke-dasharray:5 5; }
+    .territory-region { stroke:#f5eedf; stroke-width:3; vector-effect:non-scaling-stroke; opacity:.9; transition:opacity .2s ease, filter .2s ease; }
+    .territory-region:hover { opacity:1; filter:brightness(1.07); }
+    .territory-label { fill:#fffdf5; font-size:17px; font-weight:800; text-anchor:middle; paint-order:stroke; stroke:rgba(36,33,29,.48); stroke-width:3px; stroke-linejoin:round; }
+    .capital-dot { fill:#24211d; stroke:#fff8e8; stroke-width:2; }
+    .capital-label { fill:#3f382f; font-size:13px; font-weight:700; }
+    .terrain-line { fill:none; stroke:#78969b; stroke-width:5; opacity:.48; }
+    .map-compass { fill:var(--ink); opacity:.65; font-size:13px; }
+    .territory-info { padding:38px 34px; background:rgba(250,246,232,.8); border-left:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; }
+    .territory-era { color:var(--vermilion); font-size:.82rem; font-weight:700; letter-spacing:.12em; }
+    .territory-info h3 { margin:.15em 0 .45em; font-size:clamp(2rem,4vw,3.2rem); line-height:1.12; }
+    .territory-info p { color:var(--muted); margin:.2em 0 1.15em; }
+    .territory-legend { display:grid; gap:8px; padding:18px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .legend-item { display:flex; align-items:center; gap:10px; font-size:.9rem; }
+    .legend-swatch { width:17px; height:17px; border-radius:3px; border:1px solid rgba(36,33,29,.18); }
+    .territory-note { margin-top:18px !important; font-size:.78rem; line-height:1.55; }
+
     .games-section { background:rgba(255,255,255,.22); }
     .game-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
     .game-tab { min-height:44px; padding:8px 16px; border:1px solid var(--line); background:transparent; border-radius:99px; }
@@ -209,6 +233,8 @@
       .people-strip { grid-template-columns:1fr 1fr; }
       .map-shell { grid-template-columns:1fr; }
       .map-info { border-left:0; border-top:1px solid rgba(42,73,62,.2); }
+      .territory-shell { grid-template-columns:1fr; }
+      .territory-info { border-left:0; border-top:1px solid var(--line); }
       .person:nth-child(2) { border-right:0; }
       .person:nth-child(-n+2) { border-bottom:1px solid rgba(255,255,255,.18); }
     }
@@ -222,6 +248,8 @@
       .event-river::before { left:7px; }
       .event, .event:nth-child(even) { width:100%; margin-left:0; padding:0 0 30px 34px; }
       .event::after, .event:nth-child(even)::after { left:0; right:auto; }
+      .territory-map { min-height:430px; padding:10px; }
+      .territory-info { padding:30px 22px; }
       footer { flex-direction:column; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -238,7 +266,7 @@
     <nav aria-label="主导航">
       <a class="brand" href="#top"><span class="brand-seal">史</span>华夏长卷</a>
       <div class="nav-links">
-        <a href="#timeline">朝代时间轴</a><a href="#events">大事记</a><a href="#map">历史地图</a><a href="#people">历史人物</a><a href="#games">互动挑战</a>
+        <a href="#timeline">朝代时间轴</a><a href="#events">大事记</a><a href="#territories">政权版图</a><a href="#people">历史人物</a><a href="#games">互动挑战</a>
       </div>
     </nav>
     <div class="hero">
@@ -310,9 +338,27 @@
       </div>
     </section>
 
+    <section class="territory-section" id="territories">
+      <div class="section-head">
+        <div><span class="kicker">04 · Territories</span><h2>历代主要政权版图</h2></div>
+        <p>选择代表性时点，观察统一王朝与并立政权的空间格局。地图为历史教学示意，只表达大致方位和相对范围，不代表精确边界。</p>
+      </div>
+      <div class="territory-tabs" id="territoryTabs" role="tablist" aria-label="选择历史版图"></div>
+      <div class="territory-shell">
+        <div class="territory-map" id="territoryMap" aria-live="polite"></div>
+        <aside class="territory-info">
+          <span class="territory-era" id="territoryEra"></span>
+          <h3 id="territoryTitle"></h3>
+          <p id="territoryDescription"></p>
+          <div class="territory-legend" id="territoryLegend"></div>
+          <p class="territory-note">说明：古代政权的控制范围会随战争、盟约、羁縻关系和地方治理能力不断变化。本图采用统一轮廓进行相对位置比较，不套用现代国界。</p>
+        </aside>
+      </div>
+    </section>
+
     <section id="stories">
       <div class="section-head">
-        <div><span class="kicker">04 · Stories</span><h2>文明的足迹</h2></div>
+        <div><span class="kicker">05 · Stories</span><h2>文明的足迹</h2></div>
         <p>王朝会更替，文明却在交流中不断生长。制度、交通、科技和思想，一起塑造了我们今天的世界。</p>
       </div>
       <div class="story-grid">
@@ -333,7 +379,7 @@
 
     <section class="people-section" id="people">
       <div class="section-head">
-        <div><span class="kicker">05 · People</span><h2>他们与时代</h2></div>
+        <div><span class="kicker">06 · People</span><h2>他们与时代</h2></div>
         <p>认识历史人物，不只看“做了什么”，也要思考他们身处怎样的时代、面对什么选择，以及后人如何评价。</p>
       </div>
       <div class="people-strip">
@@ -346,7 +392,7 @@
 
     <section class="games-section" id="games">
       <div class="section-head">
-        <div><span class="kicker">06 · Challenge</span><h2>历史互动挑战</h2></div>
+        <div><span class="kicker">07 · Challenge</span><h2>历史互动挑战</h2></div>
         <p>题库共 300 道，每次随机抽取 20 道。刷新网页，就会开启一套新的挑战。</p>
       </div>
       <div class="game-tabs"><button class="game-tab active" data-game="quizGame">知识问答</button><button class="game-tab" data-game="orderGame">时序挑战</button></div>
@@ -375,7 +421,7 @@
     const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
       if(entry.isIntersecting){entry.target.classList.add('visible');revealObserver.unobserve(entry.target);}
     }),{threshold:.12});
-    document.querySelectorAll('.section-head,.timeline-shell,.event,.map-shell,.story-card,.person,.game-panel').forEach(el=>{el.classList.add('reveal');revealObserver.observe(el);});
+    document.querySelectorAll('.section-head,.timeline-shell,.event,.map-shell,.territory-shell,.story-card,.person,.game-panel').forEach(el=>{el.classList.add('reveal');revealObserver.observe(el);});
 
     const dynasties = [
       {name:'夏', years:'约前2070—约前1600', period:'early', subtitle:'早期国家的传说与探索', text:'传统文献将夏视为中国历史上第一个王朝。考古学者持续通过遗址与器物，探索早期国家如何形成。', tags:['早期国家','二里头文化','文献与考古']},
@@ -416,6 +462,38 @@
       tab.classList.add('active'); tab.setAttribute('aria-selected','true'); renderList(tab.dataset.period);
     }));
     renderList(); showDetail(dynasties[0]);
+
+    const territoryPeriods = [
+      {id:'shang',tab:'商',era:'约公元前13世纪',title:'商代晚期',description:'以殷为中心，政治影响主要覆盖黄河中下游，并与周边众多方国保持战争、联盟和贡纳关系。',regions:[['商','#9b4a3f','M255 210 Q338 150 445 188 L505 270 Q456 338 344 334 L264 282Z','商',374,255]],capitals:[['殷',392,235]]},
+      {id:'warring',tab:'战国',era:'公元前3世纪',title:'战国七雄',description:'七个主要诸侯国并立竞争。各国边界频繁变化，图中仅展示大致相对位置。',regions:[['秦','#8c4936','M95 220 L245 160 L286 250 L214 330 L100 310Z','秦',187,245],['赵','#537b70','M274 112 L416 95 L438 190 L308 215Z','赵',350,155],['燕','#697e96','M418 68 L617 82 L614 166 L438 190Z','燕',520,125],['齐','#b8893d','M500 180 L644 165 L665 262 L538 276Z','齐',590,223],['魏','#a25d55','M300 218 L440 194 L478 286 L344 318Z','魏',394,257],['韩','#74604c','M270 270 L355 235 L375 325 L285 345Z','韩',324,301],['楚','#4f7f61','M244 330 L520 285 L598 402 L425 462 L220 420Z','楚',414,370]],capitals:[['咸阳',206,256],['邯郸',354,177],['蓟',533,111],['临淄',590,239],['大梁',409,276],['新郑',326,318],['郢',411,391]]},
+      {id:'qin',tab:'秦',era:'公元前221年',title:'秦完成统一',description:'秦结束战国割据，在全国推行郡县制。其直接治理范围以中原和长江流域为核心，并向岭南等地拓展。',regions:[['秦','#9b4a3f','M116 175 Q270 70 493 104 Q626 135 636 270 Q604 390 470 446 Q264 468 145 369 Q76 281 116 175Z','秦',372,270]],capitals:[['咸阳',318,228]]},
+      {id:'han',tab:'汉',era:'公元前1世纪',title:'西汉主要疆域',description:'汉朝巩固统一，并设西域都护管理西域事务。河西走廊成为连接中原与西域的重要通道。',regions:[['西汉','#a64b3e','M92 180 Q214 76 478 91 Q630 120 653 260 Q627 407 466 459 Q240 462 116 365 Q61 270 92 180Z','汉',390,279],['西域都护','#b88a3b','M24 178 L96 148 L121 302 L42 327 L14 250Z','西域',68,240]],capitals:[['长安',326,247]]},
+      {id:'three',tab:'三国',era:'约公元230年',title:'魏、蜀、吴并立',description:'曹魏控制北方，蜀汉据有西南，孙吴控制长江中下游及东南地区，三方长期竞争。',regions:[['魏','#697e96','M110 110 Q348 52 612 105 L620 240 L464 274 L270 245 L117 275Z','魏',375,170],['蜀','#b8893d','M110 276 L278 243 L350 343 L287 455 L126 418Z','蜀',226,350],['吴','#4f7f61','M350 278 L620 238 L662 374 L520 461 L352 408Z','吴',500,350]],capitals:[['洛阳',398,218],['成都',220,364],['建业',505,324]]},
+      {id:'tang',tab:'唐',era:'公元8世纪前期',title:'唐代主要疆域与影响范围',description:'唐朝以长安、洛阳为政治中心，设置都护府等机构经营边疆，对周边地区的控制方式和强度并不完全相同。',regions:[['唐','#9b4a3f','M78 150 Q246 42 526 72 Q672 126 673 278 Q626 421 474 463 Q235 467 98 358 Q38 247 78 150Z','唐',386,274],['西域联系区','#b88a3b','M12 152 L90 120 L118 318 L28 344 L5 252Z','西域',62,235]],capitals:[['长安',323,250],['洛阳',406,240]]},
+      {id:'northern-song',tab:'北宋',era:'公元11世纪',title:'北宋、辽、西夏并立',description:'北宋与辽、西夏长期并立，战争与议和交替出现。南方另有大理等政权。',regions:[['辽','#697e96','M230 58 L624 66 L660 194 L536 231 L350 180 L230 150Z','辽',455,125],['西夏','#b8893d','M112 145 L242 124 L286 244 L145 276Z','西夏',194,207],['北宋','#9b4a3f','M240 188 L542 218 L598 370 L430 432 L238 360 L150 278Z','北宋',389,301],['大理','#4f7f61','M105 322 L235 340 L262 454 L116 438Z','大理',180,393]],capitals:[['开封',419,270],['上京',485,116],['兴庆',205,211],['大理',181,404]]},
+      {id:'southern-song',tab:'南宋',era:'公元12世纪',title:'南宋、金、西夏并立',description:'金控制北方大部，南宋据有淮河以南广大地区，西北有西夏，西南有大理。',regions:[['金','#697e96','M184 70 L630 72 L652 252 L486 290 L265 240 L175 185Z','金',427,161],['西夏','#b8893d','M95 150 L207 125 L256 246 L130 285Z','西夏',174,207],['南宋','#9b4a3f','M234 270 L500 282 L626 375 L490 464 L286 441 L190 355Z','南宋',412,364],['大理','#4f7f61','M89 315 L212 325 L258 453 L110 448Z','大理',170,392]],capitals:[['临安',493,353],['中都',467,154],['兴庆',177,217],['大理',170,402]]},
+      {id:'yuan',tab:'元',era:'公元13世纪后期',title:'元朝主要疆域',description:'元朝完成全国统一，在地方设置行省；对不同区域采取行省、宣政院等多种治理方式。',regions:[['元','#54766b','M54 110 Q244 18 540 49 Q700 111 699 280 Q650 432 485 481 Q223 480 75 370 Q12 232 54 110Z','元',382,263]],capitals:[['大都',472,170]]},
+      {id:'ming',tab:'明',era:'公元15世纪前期',title:'明代主要疆域',description:'明代以北京、南京为重要政治中心，设置两京十三布政使司等行政体系，并经营北部和西南边疆。',regions:[['明','#9b4a3f','M99 126 Q269 45 532 74 Q655 135 662 278 Q618 410 475 461 Q258 466 123 373 Q61 251 99 126Z','明',390,275]],capitals:[['北京',474,175],['南京',470,316]]},
+      {id:'qing',tab:'清',era:'公元18世纪中期',title:'清代统一多民族国家',description:'清代前中期统一多民族国家进一步巩固。中央通过不同制度治理内地、蒙古、新疆、西藏和台湾等区域。',regions:[['清','#54766b','M39 96 Q238 5 556 42 Q718 102 718 284 Q667 449 491 493 Q202 489 56 372 Q-4 224 39 96Z','清',386,265]],capitals:[['北京',478,174]]}
+    ];
+    const territoryTabs=document.getElementById('territoryTabs'), territoryMap=document.getElementById('territoryMap');
+    function territorySvg(item){
+      const regions=item.regions.map(r=>`<path class="territory-region" fill="${r[1]}" d="${r[2]}"><title>${r[0]}</title></path><text class="territory-label" x="${r[4]}" y="${r[5]}">${r[3]}</text>`).join('');
+      const capitals=item.capitals.map(c=>`<circle class="capital-dot" cx="${c[1]}" cy="${c[2]}" r="5"/><text class="capital-label" x="${c[1]+9}" y="${c[2]-8}">${c[0]}</text>`).join('');
+      return `<svg viewBox="0 0 740 520" role="img" aria-label="${item.title}教学示意图"><path class="land-base" d="M42 92 Q238 0 559 39 Q722 102 723 284 Q670 453 491 498 Q197 493 50 374 Q-10 220 42 92Z"/><path class="terrain-line" d="M90 285 Q230 238 330 275 T650 265"/><text class="map-compass" x="682" y="70">北 ↑</text>${regions}${capitals}</svg>`;
+    }
+    function showTerritory(id){
+      const item=territoryPeriods.find(p=>p.id===id);
+      territoryMap.innerHTML=territorySvg(item);
+      document.getElementById('territoryEra').textContent=item.era;
+      document.getElementById('territoryTitle').textContent=item.title;
+      document.getElementById('territoryDescription').textContent=item.description;
+      document.getElementById('territoryLegend').innerHTML=item.regions.map(r=>`<span class="legend-item"><i class="legend-swatch" style="background:${r[1]}"></i>${r[0]}</span>`).join('');
+      document.querySelectorAll('.territory-tab').forEach(btn=>{const active=btn.dataset.id===id;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));});
+    }
+    territoryTabs.innerHTML=territoryPeriods.map((p,i)=>`<button class="territory-tab ${i===0?'active':''}" data-id="${p.id}" role="tab" aria-selected="${i===0}">${p.tab}</button>`).join('');
+    territoryTabs.querySelectorAll('.territory-tab').forEach(btn=>btn.addEventListener('click',()=>showTerritory(btn.dataset.id)));
+    showTerritory(territoryPeriods[0].id);
 
     const mapCopy = {
       silk:['丝绸之路','以长安为重要起点，经河西走廊通往西域，并连接中亚及更远地区。它不是一条单独的道路，而是不断变化的交通网络。'],
