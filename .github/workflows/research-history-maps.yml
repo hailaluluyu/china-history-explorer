@@ -1,0 +1,84 @@
+name: Research open historical maps
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Search Wikimedia Commons
+        shell: python
+        run: |
+          import json, urllib.parse, urllib.request, pathlib, time
+
+          searches = {
+              "qin": "Qin dynasty map",
+              "han": "Han dynasty map",
+              "three_kingdoms": "Three Kingdoms China map",
+              "tang": "Tang dynasty map",
+              "song": "Song dynasty China map",
+              "yuan": "Yuan dynasty map",
+              "ming": "Ming dynasty map",
+              "qing": "Qing dynasty map",
+          }
+          endpoint = "https://commons.wikimedia.org/w/api.php"
+          headers = {"User-Agent": "china-history-explorer/1.0 educational-map-research"}
+          output = {}
+          for key, query in searches.items():
+              params = {
+                  "action": "query",
+                  "generator": "search",
+                  "gsrsearch": query,
+                  "gsrnamespace": 6,
+                  "gsrlimit": 25,
+                  "prop": "imageinfo",
+                  "iiprop": "url|size|mime|extmetadata",
+                  "format": "json",
+                  "formatversion": 2,
+              }
+              url = endpoint + "?" + urllib.parse.urlencode(params)
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  data = json.load(response)
+              pages = data.get("query", {}).get("pages", [])
+              records = []
+              for page in pages:
+                  info = (page.get("imageinfo") or [{}])[0]
+                  meta = info.get("extmetadata") or {}
+                  def val(name):
+                      item = meta.get(name) or {}
+                      return item.get("value")
+                  records.append({
+                      "title": page.get("title"),
+                      "page_url": info.get("descriptionurl"),
+                      "original_url": info.get("url"),
+                      "width": info.get("width"),
+                      "height": info.get("height"),
+                      "mime": info.get("mime"),
+                      "license_short": val("LicenseShortName"),
+                      "license_url": val("LicenseUrl"),
+                      "artist": val("Artist"),
+                      "credit": val("Credit"),
+                      "description": val("ImageDescription"),
+                      "date": val("DateTimeOriginal"),
+                      "categories": val("Categories"),
+                      "usage_terms": val("UsageTerms"),
+                      "attribution_required": val("AttributionRequired"),
+                  })
+              output[key] = records
+              time.sleep(1)
+          pathlib.Path("commons-map-research.json").write_text(
+              json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
+          print({key: len(value) for key, value in output.items()})
+
+      - name: Upload research results
+        uses: actions/upload-artifact@v4
+        with:
+          name: commons-map-research
+          path: commons-map-research.json
+          retention-days: 3
