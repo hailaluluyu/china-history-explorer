@@ -163,6 +163,12 @@
     .territory-map .leaflet-control-attribution { font-size:10px; background:rgba(250,246,232,.82); }
     .territory-map .leaflet-popup-content-wrapper { border-radius:8px; background:#faf6e8; color:var(--ink); }
     .territory-map .leaflet-popup-tip { background:#faf6e8; }
+    .atlas-viewer { min-height:570px; padding:24px; display:grid; place-items:center; background:#d9e0d8; overflow:auto; }
+    .atlas-viewer img { display:block; width:auto; max-width:100%; max-height:640px; height:auto; object-fit:contain; background:#fff; border:1px solid rgba(36,33,29,.16); box-shadow:0 16px 34px rgba(45,35,24,.18); }
+    .atlas-unavailable { max-width:520px; padding:38px; background:#faf6e8; border:1px solid var(--line); text-align:left; }
+    .atlas-unavailable strong { display:block; color:var(--vermilion); font-size:1.35rem; margin-bottom:8px; }
+    .map-credit { font-size:.78rem; line-height:1.55; color:var(--muted); margin-top:18px; }
+    .map-credit a { color:var(--vermilion); }
     .capital-marker { width:12px; height:12px; border:2px solid #fff8e8; border-radius:50%; background:#24211d; box-shadow:0 0 0 2px rgba(36,33,29,.35); }
     .capital-name { color:#24211d; font-size:12px; font-weight:800; white-space:nowrap; text-shadow:0 1px 2px #fff,1px 0 2px #fff,-1px 0 2px #fff; }
     .map-loading { position:absolute; z-index:500; inset:0; display:grid; place-items:center; background:#dce5df; color:var(--muted); }
@@ -256,7 +262,7 @@
       .event-river::before { left:7px; }
       .event, .event:nth-child(even) { width:100%; margin-left:0; padding:0 0 30px 34px; }
       .event::after, .event:nth-child(even)::after { left:0; right:auto; }
-      .territory-map { min-height:430px; }
+      .territory-map, .atlas-viewer { min-height:430px; }
       .territory-info { padding:30px 22px; }
       footer { flex-direction:column; }
     }
@@ -353,13 +359,14 @@
       </div>
       <div class="territory-tabs" id="territoryTabs" role="tablist" aria-label="选择历史版图"></div>
       <div class="territory-shell">
-        <div class="territory-map" id="territoryMap" aria-live="polite"></div>
+        <div class="territory-map atlas-viewer" id="territoryMap" aria-live="polite"></div>
         <aside class="territory-info">
           <span class="territory-era" id="territoryEra"></span>
           <h3 id="territoryTitle"></h3>
           <p id="territoryDescription"></p>
           <div class="territory-legend" id="territoryLegend"></div>
-          <p class="territory-note">说明：现代地理底图来自 OpenStreetMap；历史范围采用 <a href="https://github.com/wjt0321/china-history-river" target="_blank" rel="noopener">china-history-river</a> 的 MIT 许可 GeoJSON，并作教学展示。古代控制范围会随战争、盟约和治理能力变化，不同研究者也可能有不同复原观点；本图不套用现代国界。</p>
+          <div class="map-credit" id="mapCredit"></div>
+          <p class="territory-note">说明：每张地图表示一个明确或约略历史断面。古代控制范围会随战争、盟约和治理能力变化，不同研究者可能有不同复原观点。图版用于历史学习，不应被理解为现代国界或唯一无争议的疆界结论。</p>
         </aside>
       </div>
     </section>
@@ -504,7 +511,7 @@
     territoryTabs.querySelectorAll('.territory-tab').forEach(btn=>btn.addEventListener('click',()=>showTerritory(btn.dataset.id)));
     showTerritory(territoryPeriods[0].id); }
 
-    const geographicPeriods = [
+    if(false){ const geographicPeriods = [
       {id:'zhou',tab:'周',era:'约公元前8世纪',title:'周代主要范围',file:'zhou.geojson',color:'#8f6750',description:'周王室与众多诸侯国共同构成政治格局。此数据只表示周代整体范围，不等同于战国七雄的分国边界。',capitals:[['洛邑（洛阳）',34.62,112.45]]},
       {id:'qin',tab:'秦',era:'约公元前210年',title:'秦朝主要疆域',file:'qin.geojson',color:'#9b4a3f',description:'秦完成统一，在全国推行郡县制，并向岭南等地拓展。',capitals:[['咸阳',34.33,108.70]]},
       {id:'han',tab:'汉',era:'约公元100年',title:'汉朝主要疆域',file:'han.geojson',color:'#a84f40',description:'汉朝巩固大一统格局，河西走廊和西域交通成为东西交流的重要通道。',capitals:[['长安',34.26,108.94],['洛阳',34.62,112.45]]},
@@ -558,7 +565,33 @@
     }
     realTerritoryTabs.innerHTML=geographicPeriods.map((p,i)=>`<button class="territory-tab ${i===0?'active':''}" data-id="${p.id}" role="tab" aria-selected="${i===0}">${p.tab}</button>`).join('');
     realTerritoryTabs.querySelectorAll('.territory-tab').forEach(btn=>btn.addEventListener('click',()=>showGeographicTerritory(btn.dataset.id)));
-    showGeographicTerritory(geographicPeriods[0].id);
+    showGeographicTerritory(geographicPeriods[0].id); }
+
+    const standardMapPeriods = [
+      {id:'qin',tab:'秦',era:'公元前221年',title:'秦帝国版图',image:'qin.png',description:'以公元前221年秦完成统一为断面，显示秦的疆域、周边地理与主要区域。',artist:'Natural Earth / Wikimedia Commons contributors',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0',page:'https://commons.wikimedia.org/wiki/File:Map_of_the_Qin_Empire_in_221_BCE.png'},
+      {id:'han',tab:'西汉',era:'公元前87年',title:'西汉版图',image:'han.jpg',description:'展示汉武帝之后西汉的疆域格局，图中包含山河、周边区域与历史地名。',artist:'Kallgan；由 Shizhao 转移至 Commons',license:'CC BY-SA 3.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/3.0',page:'https://commons.wikimedia.org/wiki/File:China_Han_Dynasty_1.jpg'},
+      {id:'three',tab:'三国',era:'约公元262年',title:'魏、蜀汉、吴三国版图',image:'three.png',description:'分色展示魏、蜀汉、吴的并立格局，适合比较三方地理位置和战略空间。',artist:'Big states',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0',page:'https://commons.wikimedia.org/wiki/File:Three_Kingdoms_of_Ancient_China.png'},
+      {id:'tang',tab:'唐',era:'约公元700年',title:'唐代版图',image:'tang.png',description:'展示唐朝约公元700年的疆域及周边政权。边疆地区的实际控制与影响方式并不完全相同。',artist:'Ian Kiu',license:'CC BY-SA 3.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/3.0',page:'https://commons.wikimedia.org/wiki/File:Tang_Dynasty_circa_700_CE.png'},
+      {id:'song',tab:'宋',era:'北宋与南宋',title:'宋代并立政权地图',image:null,description:'已找到的宋代候选图版在元数据中明确写着复制自现代《中国历史地图集》，公开再利用的授权链存在疑问，因此暂不放入网站。',reason:'暂无通过版权与来源审核的开放许可标准图。宁可暂缺，也不使用版权存疑或粗糙边界冒充课本地图。'},
+      {id:'yuan',tab:'元',era:'公元1294年',title:'元代版图',image:'yuan.png',description:'展示元朝与蒙古诸汗国的空间关系。注意：诸汗国不等于元朝直接行政统治范围。',artist:'Ian Kiu',license:'CC BY 3.0',licenseUrl:'https://creativecommons.org/licenses/by/3.0',page:'https://commons.wikimedia.org/wiki/File:Yuan_Dynasty_1294.png'},
+      {id:'ming',tab:'明',era:'公元1415年',title:'明代版图',image:'ming.png',description:'以永乐时期为历史断面，展示明朝主要疆域与周边区域。',artist:'Wikimedia Commons contributor（文件页未提供机器可读作者）',license:'CC BY 3.0',licenseUrl:'https://creativecommons.org/licenses/by/3.0',page:'https://commons.wikimedia.org/wiki/File:Ming_Dynasty_1415.png'},
+      {id:'qing',tab:'清',era:'清代前中期',title:'清代标准图待补',image:null,description:'已检索到的清代1820年候选图被 Wikimedia Commons 标记为“重大不准确”和“低质量”，不适合作为课本式标准地图。',reason:'暂不采用存在重大准确性警告的图版，等待可靠、开放许可且经过史学审核的底图。'}
+    ];
+    const atlasTabs=document.getElementById('territoryTabs'), atlasViewer=document.getElementById('territoryMap');
+    function showStandardMap(id){
+      const item=standardMapPeriods.find(p=>p.id===id);
+      document.getElementById('territoryEra').textContent=item.era;
+      document.getElementById('territoryTitle').textContent=item.title;
+      document.getElementById('territoryDescription').textContent=item.description;
+      document.getElementById('territoryLegend').innerHTML=item.image?'<span class="legend-item">图中不同颜色代表政权、行政区域或影响范围；请结合原图图例阅读。</span>':'<span class="legend-item">此时期暂不展示未经审核的地图。</span>';
+      document.getElementById('mapCredit').innerHTML=item.image?`图版作者：${item.artist}<br>来源：<a href="${item.page}" target="_blank" rel="noopener">Wikimedia Commons 文件页</a><br>许可：<a href="${item.licenseUrl}" target="_blank" rel="noopener">${item.license}</a>。本站仅做尺寸适配，未修改地图内容。`:item.reason;
+      atlasViewer.innerHTML=item.image?`<a href="assets/standard-maps/${item.image}" target="_blank" title="打开原尺寸地图"><img src="assets/standard-maps/${item.image}" alt="${item.title}，${item.era}" loading="lazy"></a>`:`<div class="atlas-unavailable"><strong>${item.title}</strong><p>${item.reason}</p></div>`;
+      atlasViewer.setAttribute('aria-label',`${item.title}标准历史地图图版`);
+      document.querySelectorAll('.territory-tab').forEach(btn=>{const active=btn.dataset.id===id;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));});
+    }
+    atlasTabs.innerHTML=standardMapPeriods.map((p,i)=>`<button class="territory-tab ${i===0?'active':''}" data-id="${p.id}" role="tab" aria-selected="${i===0}">${p.tab}</button>`).join('');
+    atlasTabs.querySelectorAll('.territory-tab').forEach(btn=>btn.addEventListener('click',()=>showStandardMap(btn.dataset.id)));
+    showStandardMap(standardMapPeriods[0].id);
 
     const mapCopy = {
       silk:['丝绸之路','以长安为重要起点，经河西走廊通往西域，并连接中亚及更远地区。它不是一条单独的道路，而是不断变化的交通网络。'],
