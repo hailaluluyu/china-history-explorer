@@ -13,7 +13,7 @@ jobs:
       - name: Fetch exact Commons files and metadata
         shell: python
         run: |
-          import json, pathlib, re, urllib.parse, urllib.request
+          import json, pathlib, re, time, urllib.error, urllib.parse, urllib.request
 
           files = {
               "qin": "File:Map of the Qin Empire in 221 BCE.png",
@@ -33,7 +33,8 @@ jobs:
           for key, title in files.items():
               params = {
                   "action": "query", "titles": title, "prop": "imageinfo",
-                  "iiprop": "url|size|mime|extmetadata", "format": "json", "formatversion": 2,
+                  "iiprop": "url|size|mime|extmetadata", "iiurlwidth": 1600,
+                  "format": "json", "formatversion": 2,
               }
               req = urllib.request.Request(endpoint + "?" + urllib.parse.urlencode(params), headers=headers)
               with urllib.request.urlopen(req, timeout=90) as response:
@@ -45,15 +46,27 @@ jobs:
               meta = info.get("extmetadata") or {}
               def val(name): return (meta.get(name) or {}).get("value")
               original = info["url"]
+              display_url = info.get("thumburl") or original
               suffix = pathlib.PurePosixPath(urllib.parse.urlparse(original).path).suffix.lower()
               filename = key + suffix
-              image_req = urllib.request.Request(original, headers=headers)
-              with urllib.request.urlopen(image_req, timeout=180) as response:
-                  content = response.read()
+              content = None
+              for attempt in range(6):
+                  try:
+                      image_req = urllib.request.Request(display_url, headers=headers)
+                      with urllib.request.urlopen(image_req, timeout=180) as response:
+                          content = response.read()
+                      break
+                  except urllib.error.HTTPError as error:
+                      if error.code != 429 or attempt == 5:
+                          raise
+                      time.sleep(20 * (attempt + 1))
+              if content is None:
+                  raise RuntimeError(f"Failed to download {title}")
               (outdir / filename).write_bytes(content)
               manifest[key] = {
                   "title": page.get("title"), "filename": filename,
                   "page_url": info.get("descriptionurl"), "original_url": original,
+                  "display_url": display_url,
                   "width": info.get("width"), "height": info.get("height"), "mime": info.get("mime"),
                   "license": val("LicenseShortName"), "license_url": val("LicenseUrl"),
                   "artist_html": val("Artist"), "credit_html": val("Credit"),
@@ -61,6 +74,7 @@ jobs:
                   "attribution_required": val("AttributionRequired"), "bytes": len(content),
               }
               print(key, filename, len(content), manifest[key]["license"])
+              time.sleep(8)
           (outdir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
       - name: Upload verified map package
