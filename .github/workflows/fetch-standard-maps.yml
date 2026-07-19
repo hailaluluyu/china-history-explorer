@@ -1,0 +1,71 @@
+name: Fetch verified standard history maps
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch exact Commons files and metadata
+        shell: python
+        run: |
+          import json, pathlib, re, urllib.parse, urllib.request
+
+          files = {
+              "qin": "File:Map of the Qin Empire in 221 BCE.png",
+              "han": "File:China Han Dynasty 1.jpg",
+              "three": "File:Three Kingdoms of Ancient China.png",
+              "tang": "File:Tang Dynasty circa 700 CE.png",
+              "north_song": "File:China 11a.jpg",
+              "south_song": "File:China 11b.jpg",
+              "yuan": "File:Yuan Dynasty 1294.png",
+              "ming": "File:Ming Dynasty 1415.png",
+          }
+          endpoint = "https://commons.wikimedia.org/w/api.php"
+          headers = {"User-Agent": "china-history-explorer/1.0 educational-map-fetch"}
+          outdir = pathlib.Path("standard-maps")
+          outdir.mkdir()
+          manifest = {}
+          for key, title in files.items():
+              params = {
+                  "action": "query", "titles": title, "prop": "imageinfo",
+                  "iiprop": "url|size|mime|extmetadata", "format": "json", "formatversion": 2,
+              }
+              req = urllib.request.Request(endpoint + "?" + urllib.parse.urlencode(params), headers=headers)
+              with urllib.request.urlopen(req, timeout=90) as response:
+                  data = json.load(response)
+              page = data["query"]["pages"][0]
+              if page.get("missing"):
+                  raise RuntimeError(f"Commons file missing: {title}")
+              info = page["imageinfo"][0]
+              meta = info.get("extmetadata") or {}
+              def val(name): return (meta.get(name) or {}).get("value")
+              original = info["url"]
+              suffix = pathlib.PurePosixPath(urllib.parse.urlparse(original).path).suffix.lower()
+              filename = key + suffix
+              image_req = urllib.request.Request(original, headers=headers)
+              with urllib.request.urlopen(image_req, timeout=180) as response:
+                  content = response.read()
+              (outdir / filename).write_bytes(content)
+              manifest[key] = {
+                  "title": page.get("title"), "filename": filename,
+                  "page_url": info.get("descriptionurl"), "original_url": original,
+                  "width": info.get("width"), "height": info.get("height"), "mime": info.get("mime"),
+                  "license": val("LicenseShortName"), "license_url": val("LicenseUrl"),
+                  "artist_html": val("Artist"), "credit_html": val("Credit"),
+                  "description_html": val("ImageDescription"), "usage_terms": val("UsageTerms"),
+                  "attribution_required": val("AttributionRequired"), "bytes": len(content),
+              }
+              print(key, filename, len(content), manifest[key]["license"])
+          (outdir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+      - name: Upload verified map package
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-standard-history-maps
+          path: standard-maps/
+          retention-days: 3
